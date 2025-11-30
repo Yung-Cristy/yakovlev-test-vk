@@ -1,0 +1,17 @@
+[Unit]
+Description=Web Monitoring Service
+After=network.target
+
+[Service]
+Type=simple
+User=mikhail
+Group=mikhail
+WorkingDirectory=/home/mikhail/web-monitoring
+ExecStart=/home/mikhail/web-monitoring/web-monitoring
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

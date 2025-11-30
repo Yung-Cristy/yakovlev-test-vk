@@ -1,0 +1,20 @@
+---
+# Web Monitoring Service Configuration
+app_config:
+  name: "web-monitoring"
+  port: "8080"
+  host: "localhost"
+
+# Health Check Configuration
+health_check:
+  interval: "30s"           # Интервал проверки (10s, 30s, 1min, 2min, 5min)
+  boot_delay: "1min"        # Задержка после загрузки системы
+  timeout: 5                # Таймаут curl в секундах
+
+# Paths Configuration
+paths:
+  app_dir: "/home/mikhail/web-monitoring"
+  log_file: "/var/log/service-health.log"
+
+# User Configuration
+app_user: "mikhail"

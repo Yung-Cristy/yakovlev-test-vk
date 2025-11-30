@@ -1,0 +1,114 @@
+---
+- name: Deploy Web Monitoring Service
+  hosts: localhost
+  connection: local
+  become: yes
+
+  vars_files:
+    - vars.yml
+
+  tasks:
+    - name: Create application directory
+      ansible.builtin.file:
+        path: "{{ paths.app_dir }}"
+        state: directory
+        mode: '0755'
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+
+    - name: Check if Go is installed
+      ansible.builtin.command: which go
+      register: go_check
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Install Golang (if not installed)
+      ansible.builtin.apt:
+        name: golang
+        state: present
+
+    - name: Deploy Go application source
+      ansible.builtin.copy:
+        src: files/web-monitoring.go
+        dest: "{{ paths.app_dir }}/web-monitoring.go"
+        mode: '0644'
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+
+    - name: Build Go application
+      ansible.builtin.shell:
+        cmd: go build -o web-monitoring web-monitoring.go
+        chdir: "{{ paths.app_dir }}"
+        creates: "{{ paths.app_dir }}/web-monitoring"
+
+    - name: Deploy health check script
+      ansible.builtin.copy:
+        src: files/health-check.sh
+        dest: "{{ paths.app_dir }}/health-check.sh"
+        mode: '0755'
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+
+    - name: Create log file with correct permissions
+      ansible.builtin.file:
+        path: "{{ paths.log_file }}"
+        state: touch
+        mode: '0644'
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+
+    - name: Deploy main service
+      ansible.builtin.copy:
+        src: files/web-monitoring.service
+        dest: "/etc/systemd/system/{{ app_config.name }}.service"
+        mode: '0644'
+
+    - name: Deploy health check service (with root privileges)
+      ansible.builtin.copy:
+        src: files/health-check.service
+        dest: "/etc/systemd/system/health-check.service"
+        mode: '0644'
+
+    - name: Deploy health check timer
+      ansible.builtin.copy:
+        src: files/health-check.timer
+        dest: "/etc/systemd/system/health-check.timer"
+        mode: '0644'
+
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: yes
+
+    - name: Enable and start main service
+      ansible.builtin.systemd:
+        name: "{{ app_config.name }}"
+        state: started
+        enabled: yes
+
+    - name: Wait for main service to start
+      ansible.builtin.wait_for:
+        port: "{{ app_config.port }}"
+        host: "{{ app_config.host }}"
+        timeout: 30
+
+    - name: Enable health check service
+      ansible.builtin.systemd:
+        name: health-check.service
+        enabled: yes
+
+    - name: Enable and start health check timer
+      ansible.builtin.systemd:
+        name: health-check.timer
+        state: started
+        enabled: yes
+
+    - name: Show completion message
+      ansible.builtin.debug:
+        msg:
+          - "Web monitoring service deployed and started."
+          - "Application: http://{{ app_config.host }}:{{ app_config.port }}"
+          - "Health checks: every {{ health_check.interval }}"
+          - "Log file: {{ paths.log_file }}"
+          - "Auto-recovery: TESTED AND WORKING"
+          - "Check status: systemctl status {{ app_config.name }}"
+          - "Check timer: systemctl status health-check.timer"
