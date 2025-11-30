@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Все переменные должны быть переданы через Environment
 SERVICE_NAME="$HEALTH_CHECK_SERVICE_NAME"
 LOG_FILE="$HEALTH_CHECK_LOG_FILE"
 CHECK_URL="$HEALTH_CHECK_URL"
