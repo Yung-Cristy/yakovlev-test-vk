@@ -49,7 +49,7 @@
         owner: "{{ app_user }}"
         group: "{{ app_user }}"
 
-    - name: Create log file with correct permissions
+    - name: Create log file
       ansible.builtin.file:
         path: "{{ paths.log_file }}"
         state: touch
@@ -63,7 +63,7 @@
         dest: "/etc/systemd/system/{{ app_config.name }}.service"
         mode: '0644'
 
-    - name: Deploy health check service (with root privileges)
+    - name: Deploy health check service
       ansible.builtin.copy:
         src: files/health-check.service
         dest: "/etc/systemd/system/health-check.service"
@@ -85,12 +85,6 @@
         state: started
         enabled: yes
 
-    - name: Wait for main service to start
-      ansible.builtin.wait_for:
-        port: "{{ app_config.port }}"
-        host: "{{ app_config.host }}"
-        timeout: 30
-
     - name: Enable health check service
       ansible.builtin.systemd:
         name: health-check.service
@@ -106,9 +100,3 @@
       ansible.builtin.debug:
         msg:
           - "Web monitoring service deployed and started."
-          - "Application: http://{{ app_config.host }}:{{ app_config.port }}"
-          - "Health checks: every {{ health_check.interval }}"
-          - "Log file: {{ paths.log_file }}"
-          - "Auto-recovery: TESTED AND WORKING"
-          - "Check status: systemctl status {{ app_config.name }}"
-          - "Check timer: systemctl status health-check.timer"
