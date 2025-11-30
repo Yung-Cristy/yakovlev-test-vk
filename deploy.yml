@@ -6,7 +6,7 @@
 
   vars_files:
     - vars.yml
-
+# Создание директории приложения
   tasks:
     - name: Create application directory
       ansible.builtin.file:
@@ -15,18 +15,18 @@
         mode: '0755'
         owner: "{{ app_user }}"
         group: "{{ app_user }}"
-
-    - name: Check if Go is installed
+#Проверка наличия GO на хосте
+    - name: Check GO installation
       ansible.builtin.command: which go
       register: go_check
       ignore_errors: yes
       changed_when: false
-
+# Установка GO
     - name: Install Golang (if not installed)
       ansible.builtin.apt:
         name: golang
         state: present
-
+# Размещение файлов приложения на хосте
     - name: Deploy Go application source
       ansible.builtin.copy:
         src: files/web-monitoring.go
@@ -34,13 +34,13 @@
         mode: '0644'
         owner: "{{ app_user }}"
         group: "{{ app_user }}"
-
+# Сборка GO-приложения в бинарник
     - name: Build Go application
       ansible.builtin.shell:
         cmd: go build -o web-monitoring web-monitoring.go
         chdir: "{{ paths.app_dir }}"
         creates: "{{ paths.app_dir }}/web-monitoring"
-
+# Размещение скрипта для проверки работоспособности приложения
     - name: Deploy health check script
       ansible.builtin.copy:
         src: files/health-check.sh
@@ -48,7 +48,7 @@
         mode: '0755'
         owner: "{{ app_user }}"
         group: "{{ app_user }}"
-
+# Создание файла логов приложения
     - name: Create log file
       ansible.builtin.file:
         path: "{{ paths.log_file }}"
@@ -56,46 +56,46 @@
         mode: '0644'
         owner: "{{ app_user }}"
         group: "{{ app_user }}"
-
+# Создание systemd-service из собранного GO-приложения
     - name: Deploy main service
       ansible.builtin.copy:
         src: files/web-monitoring.service
         dest: "/etc/systemd/system/{{ app_config.name }}.service"
         mode: '0644'
-
+#  Создание systemd-service на основе скрипта мониторинга
     - name: Deploy health check service
       ansible.builtin.copy:
         src: files/health-check.service
         dest: "/etc/systemd/system/health-check.service"
         mode: '0644'
-
+# Размещение на хосте таймера автоматического запуска скрипта мониторинга
     - name: Deploy health check timer
       ansible.builtin.copy:
         src: files/health-check.timer
         dest: "/etc/systemd/system/health-check.timer"
         mode: '0644'
-
+# Перезапуск демонов для сохранения настроек
     - name: Reload systemd
       ansible.builtin.systemd:
         daemon_reload: yes
-
+# Включение systemd-демона GO-приложения и настройка его автозапуска при включении
     - name: Enable and start main service
       ansible.builtin.systemd:
         name: "{{ app_config.name }}"
         state: started
         enabled: yes
-
+# Включение systemd-демона скрипта-мониторинга и настройка его автозапуска при включении
     - name: Enable health check service
       ansible.builtin.systemd:
         name: health-check.service
         enabled: yes
-
+# Включение systemd-демона таймера и настройка его автозапуска при включении
     - name: Enable and start health check timer
       ansible.builtin.systemd:
         name: health-check.timer
         state: started
         enabled: yes
-
+# Уведомление о выполнении всех шалогов плейбука
     - name: Show completion message
       ansible.builtin.debug:
         msg:
