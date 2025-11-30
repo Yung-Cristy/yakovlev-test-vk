@@ -17,7 +17,7 @@
 
 ### Клонирование репозитория
 ```bash
-git clone https://github.com/Yung-Cristy/vk-test/
+git clone https://github.com/Yung-Cristy/yakovlev-test-vk/
 cd vk-test
 ```
 
