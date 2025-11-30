@@ -16,7 +16,7 @@
         owner: "{{ app_user }}"
         group: "{{ app_user }}"
 
-    - name: Check if Go is installed
+    - name: Check GO installation
       ansible.builtin.command: which go
       register: go_check
       ignore_errors: yes
@@ -49,7 +49,7 @@
         owner: "{{ app_user }}"
         group: "{{ app_user }}"
 
-    - name: Create log file with correct permissions
+    - name: Create log file
       ansible.builtin.file:
         path: "{{ paths.log_file }}"
         state: touch
@@ -58,20 +58,20 @@
         group: "{{ app_user }}"
 
     - name: Deploy main service
-      ansible.builtin.copy:
-        src: files/web-monitoring.service
+      ansible.builtin.template:
+        src: files/templates/web-monitoring.service.j2
         dest: "/etc/systemd/system/{{ app_config.name }}.service"
         mode: '0644'
 
-    - name: Deploy health check service (with root privileges)
-      ansible.builtin.copy:
-        src: files/health-check.service
+    - name: Deploy health check service
+      ansible.builtin.template:
+        src: files/templates/health-check.service.j2
         dest: "/etc/systemd/system/health-check.service"
         mode: '0644'
 
     - name: Deploy health check timer
-      ansible.builtin.copy:
-        src: files/health-check.timer
+      ansible.builtin.template:
+        src: files/templates/health-check.timer.j2
         dest: "/etc/systemd/system/health-check.timer"
         mode: '0644'
 
@@ -84,12 +84,6 @@
         name: "{{ app_config.name }}"
         state: started
         enabled: yes
-
-    - name: Wait for main service to start
-      ansible.builtin.wait_for:
-        port: "{{ app_config.port }}"
-        host: "{{ app_config.host }}"
-        timeout: 30
 
     - name: Enable health check service
       ansible.builtin.systemd:

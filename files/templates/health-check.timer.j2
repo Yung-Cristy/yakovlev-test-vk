@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Health Check every {{ health_check.interval }}
+Requires=health-check.service
+
+[Timer]
+OnBootSec={{ health_check.boot_delay }}
+OnUnitActiveSec={{ health_check.interval }}
+
+[Install]
+WantedBy=timers.target

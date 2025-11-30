@@ -1,0 +1,16 @@
+[Unit]
+Description=Health Check Service
+After={{ app_config.name }}.service
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+WorkingDirectory={{ paths.app_dir }}
+Environment=HEALTH_CHECK_SERVICE_NAME={{ app_config.name }}
+Environment=HEALTH_CHECK_LOG_FILE={{ paths.log_file }}
+Environment=HEALTH_CHECK_URL=http://{{ app_config.host }}:{{ app_config.port }}
+Environment=HEALTH_CHECK_TIMEOUT={{ health_check.timeout }}
+ExecStart={{ paths.app_dir }}/health-check.sh
+StandardOutput=journal
+StandardError=journal
