@@ -1,98 +1,66 @@
 # Система мониторинга веб-приложения
 
-## Описание
-Автоматизированная система мониторинга и восстановления веб-приложения с использованием Go, systemd и Ansible. Система обеспечивает постоянную доступность веб-сервиса с автоматическим перезапуском при сбоях.
+Автоматизированная система мониторинга и восстановления веб-приложения на Go с использованием systemd и Ansible.
 
-## Архитектура решения
+## Файлы проекта
 
-### Компоненты системы:
-- web-monitoring.go - Веб-приложение на Go, возвращающее "Hello World!"
-- health-check.sh - Скрипт проверки здоровья приложения
-- systemd сервисы - Для автоматического управления и мониторинга
-- Ansible плейбук - Для автоматического развертывания и обновления
+- **web-monitoring.go** - Веб-приложение на Go
+- **health-check.sh** - Скрипт проверки здоровья  
+- **deploy.yml** - Ansible плейбук для развертывания
+- **vars.yml** - Конфигурационные параметры
+- **templates/** - шаблоны для создания Systemd-служб приложения
+- **templates/web-monitoring.service** - шаблон службы основного приложения
+- **templates/health-check.service** - шаблон службы мониторинга приложения
+- **templates/health-check.timer** - шаблон службы таймера проверок
 
-### Структура проекта:
-project/
-├── deploy.yml - Ansible плейбук для развертывания
-├── vars.yml - Конфигурационные переменные
-├── README.md - Документация
-└── files/ - Исходные файлы приложения
-    ├── web-monitoring.go - Исходный код приложения
-    ├── health-check.sh - Скрипт мониторинга
-    ├── templates/ - Шаблоны конфигураций
-    │   ├── web-monitoring.service.j2
-    │   ├── health-check.service.j2
-    │   └── health-check.timer.j2
-    └── systemd/ - Исходные systemd файлы
-        ├── web-monitoring.service
-        ├── health-check.service
-        └── health-check.timer
+## Установка и запуск
 
-## Функциональность
+### Клонирование репозитория
+```bash
+git clone https://github.com/Yung-Cristy/vk-test/
+cd vk-test
+```
 
-### Основные возможности:
-- Веб-приложение - Сервер на Go, возвращающий "Hello World!" на порту 8080
-- Мониторинг здоровья - Автоматическая проверка доступности каждые 30 секунд
-- Авто-восстановление - Перезапуск приложения при обнаружении сбоя
-- Логирование - Запись всех событий мониторинга в файл логов
-- Автозапуск - Запуск при загрузке системы и поддержание работы
+### Автоматическое развертывание 
+```bash
+sudo ansible-playbook deploy.yml
+```
 
-### Systemd сервисы:
-- web-monitoring.service - Основной сервис приложения
-- health-check.service - Сервис проверки здоровья
-- health-check.timer - Таймер периодического запуска проверок
+### Проверка статуса служб
+```bash
+sudo systemctl status web-monitoring
+sudo systemctl status health-check.timer
+```
 
-## Быстрый запуск
+### Просмотр логов приложения
+```bash
+sudo journalctl -u web-monitoring -f
+```
 
-### 1. Установка и запуск:
-# Клонирование репозитория
-git clone <repository-url>
-cd <project-directory>
+### Просмотр логов мониторинга
+```bash
+sudo tail -f /var/log/service-health.log
+```
 
-# Запуск автоматического развертывания
-ansible-playbook deploy.yml
-
-### 2. Проверка работы:
-# Проверить статус приложения
-systemctl status web-monitoring
-
-# Проверить статус мониторинга
-systemctl status health-check.timer
-
-# Просмотр логов мониторинга
-tail -f /var/log/service-health.log
-
-# Просмотр логов приложения
-journalctl -u web-monitoring -f
-
-### 3. Тестирование работы:
-# Проверить ответ приложения
+### Тестирование приложения
+```bash
 curl http://localhost:8080
-# Должен вернуть: Hello World!
+
+```
+
+## Ожидаемый ответ: Hello World!
 
 ## Конфигурация
 
-Все настройки системы находятся в файле vars.yml:
+Основные настройки в файле `vars.yml`:
 
-### Основные параметры:
-app_config:
-  name: "web-monitoring"    # Имя сервиса
-  port: "8080"             # Порт приложения
-  host: "localhost"        # Хост приложения
-
-health_check:
-  interval: "30s"          # Интервал проверки здоровья
-  boot_delay: "1min"       # Задержка после загрузки системы
-  timeout: 5               # Таймаут HTTP запроса
-
-paths:
-  app_dir: "/home/mikhail/web-monitoring"  # Директория приложения
-  log_file: "/var/log/service-health.log"  # Файл логов мониторинга
-
-app_user: "mikhail"        # Пользователь для запуска приложения
-
-## Логирование
-
-### Файлы логов:
-- Логи мониторинга: /var/log/service-health.log
-- Логи приложения: journalctl -u web-monitoring
+| Переменная | Описание |
+| :--- | :--- |
+| `app_config.name` | Имя systemd службы |
+| `app_config.port` | Порт веб-приложения |
+| `app_config.host` | Хост для подключения |
+| `health_check.interval` | Интервал проверки здоровья |
+| `health_check.timeout` | Таймаут HTTP-запроса в секундах |
+| `paths.app_dir` | Директория с приложением |
+| `paths.log_file` | Файл для логов мониторинга |
+| `app_user` | Пользователь для запуска службы |
