@@ -103,6 +103,3 @@
           - "Application: http://{{ app_config.host }}:{{ app_config.port }}"
           - "Health checks: every {{ health_check.interval }}"
           - "Log file: {{ paths.log_file }}"
-          - "Auto-recovery: TESTED AND WORKING"
-          - "Check status: systemctl status {{ app_config.name }}"
-          - "Check timer: systemctl status health-check.timer"
